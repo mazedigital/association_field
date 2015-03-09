@@ -122,7 +122,10 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
 
                 if ($limit > 0) {
                     EntryManager::setFetchSorting($section->getSortingField(), $section->getSortingOrder());
-                    $entries = EntryManager::fetch(null, $section->get('id'), $limit, 0, null, null, false, false);
+                    $where = null;
+                    $joins = null;
+
+                    $entries = EntryManager::fetch(null, $section->get('id'), $limit, 0, $where, $joins, false, false);
                     foreach ($entries as $entry) {
                         $results[] = (int) $entry['id'];
                     }
@@ -551,7 +554,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
 
         SectionManager::removeSectionAssociation($id);
         foreach ($this->get('related_field_id') as $field_id) {
-            SectionManager::createSectionAssociation(null, $id, (int) $field_id, $this->get('show_association') == 'yes' ? true : false, $this->get('association_ui'), $this->get('association_editor'));
+            SectionManager::createSectionAssociation(null, $id, (int) $field_id, $this->get('show_association') == 'yes' ? true : false, $this->get('association_ui'), $this->get('association_editor'), $this->get('association_filter'));
         }
 
         return true;
@@ -748,8 +751,8 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
     public function getImportModes()
     {
         return array(
-            'getValue' =>       ImportableField::STRING_VALUE,
-            'getPostdata' =>    ImportableField::ARRAY_VALUE
+            'getPostdata' =>    ImportableField::ARRAY_VALUE,
+            'getValue' =>       ImportableField::STRING_VALUE
         );
     }
 
@@ -777,7 +780,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
                 }
             }
 
-            return $this->processRawFieldData($data, $status, $message, true, $entry_id);
+            return $data;//$this->processRawFieldData($data, $status, $message, true, $entry_id);
         }
 
         return null;
