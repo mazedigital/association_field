@@ -410,6 +410,48 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
         return $value;
     }
 
+    /**
+     * Given an ID this function will do a lookup to
+     * find it's value from the related field.
+     *
+     * @since 1.0
+     * @param string $value
+     * @return integer
+     */
+    public function fetchValueFromID($id)
+    {
+        $value = null;
+        $related_field_ids = $this->get('related_field_id');
+
+        foreach ($related_field_ids as $related_field_id) {
+            // try {
+                $return = Symphony::Database()->fetchCol("value", sprintf(
+                    "SELECT `value`
+                     FROM `tbl_entries_data_%d`
+                     WHERE `entry_id` = '%d'
+                     LIMIT 1",
+                    $related_field_id,
+                    $id
+                ));
+
+                // Skipping returns wrong results when doing an
+                // AND operation, return 0 instead.
+                if (!empty($return)) {
+                    $value = $return[0];
+                    break;
+                }
+            try{
+            } catch (Exception $ex) {
+                // Do nothing, this would normally be the case when a handle
+                // column doesn't exist!
+            }
+        }
+
+        $value = (is_null($value)) ? $id : $value;
+
+        return $value;
+    }
+
 /*-------------------------------------------------------------------------
     Settings:
 -------------------------------------------------------------------------*/
