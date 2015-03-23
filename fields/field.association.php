@@ -373,7 +373,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
      * will do a lookup to field the `entry_id` from the related fields
      * of the field and returns the `entry_id`.
      *
-     * @since 1.27
+     * @since 1.0
      * @param string $value
      * @return integer
      */
@@ -415,8 +415,8 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
      * find it's value from the related field.
      *
      * @since 1.0
-     * @param string $value
-     * @return integer
+     * @param integer $id
+     * @return string
      */
     public function fetchValueFromID($id)
     {
@@ -442,7 +442,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
                 }
             try{
             } catch (Exception $ex) {
-                // Do nothing, this would normally be the case when a handle
+                // Do nothing, this would normally be the case when a value
                 // column doesn't exist!
             }
         }
