@@ -122,10 +122,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
 
                 if ($limit > 0) {
                     EntryManager::setFetchSorting($section->getSortingField(), $section->getSortingOrder());
-                    $where = null;
-                    $joins = null;
-
-                    $entries = EntryManager::fetch(null, $section->get('id'), $limit, 0, $where, $joins, false, false);
+                    $entries = EntryManager::fetch(null, $section->get('id'), $limit, 0, null, null, false, false);
                     foreach ($entries as $entry) {
                         $results[] = (int) $entry['id'];
                     }
@@ -822,7 +819,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
                 }
             }
 
-            return $data;//$this->processRawFieldData($data, $status, $message, true, $entry_id);
+            return $data;
         }
 
         return null;
