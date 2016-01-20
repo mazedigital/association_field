@@ -3,6 +3,31 @@
 Class extension_association_field extends Extension
 {
 
+    /**
+     * {@inheritDoc}
+     */
+    public function getSubscribedDelegates()  {
+        return array(
+            array(
+                'page' => '/backend/',
+                'delegate' => 'InitaliseAdminPageHead',
+                'callback' => 'appendAssets'
+            )
+        );
+    }
+
+    /**
+     * Append assets
+     */
+    public function appendAssets()
+    {
+        $callback = Symphony::Engine()->getPageCallback();
+
+        if ($callback['driver'] == 'publish' && $callback['context']['page'] === 'index') {
+            Administration::instance()->Page->addStylesheetToHead(URL . '/extensions/association_field/assets/association_field.publish.css');
+        }
+    }
+
     public function install()
     {
         try {

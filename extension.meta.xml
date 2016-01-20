@@ -13,8 +13,15 @@
 		</author>
 	</authors>
 	<releases>
-		<release version="1.0.0beta" date="2014-07-29" min="2.5">
-			- Prepare release
+		<release version="1.0.1" date="2015-07-21" min="2.5">
+			- Removed association count from index for single select fields
+		</release>
+		<release version="1.0.0" date="2015-07-21" min="2.5">
+			- Enabled publish filtering
+			- Fixed importing
+			- Fixed markup handling in captions
+			- Backported Select Box Link changes
+			- Added markup to index tables for interface styling
 		</release>
 		<release version="0.5.4" date="2014-07-24" min="2.4">
 			- Merged in changes from Select Box Link

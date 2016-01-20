@@ -102,7 +102,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
 
         // find the sections of the related fields
         $sections = Symphony::Database()->fetch(
-            "SELECT DISTINCT (s.id), f.id as `field_id`
+            "SELECT DISTINCT (s.id), f.id as `field_id`, s.sortorder 
              FROM `tbl_sections` AS `s`
              LEFT JOIN `tbl_fields` AS `f` ON `s`.id = `f`.parent_section
              WHERE `f`.id IN ('" . implode("','", $this->get('related_field_id')) . "')
@@ -159,12 +159,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
         $related_values = $this->findRelatedValues($selected_ids);
 
         // Group values
-        $association_context = $this->getAssociationContext();
         foreach ($related_values as $value) {
-            if (!empty($association_context['interface'])) {
-                $value['value'] = htmlspecialchars($value['value']);
-            }
-
             $values[$value['id']] = $value['value'];
         }
 
@@ -180,6 +175,10 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
     {
         $options = $this->findOptions();
         $output = $options[0]['values'];
+
+        foreach ($output as $key => $value) {
+            $output[$key] = htmlspecialchars($value);
+        }
 
         if ($this->get('required') !== 'yes') {
             $output[""] = __('None');
@@ -345,7 +344,21 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
                             $field_data,
                             $entry->get('id')
                         );
+
+                        if(is_array($value) && count($value) === 1) {
+                            $value = implode($value);
+                        }
                     }
+
+                    /**
+                     * To ensure that the output is 'safe' for whoever consumes this function,
+                     * we will sanitize the value. Before sanitizing, we will reverse sanitise
+                     * the value to handle the scenario where the Field has been good and
+                     * has already sanitized the value.
+                     *
+                     * @see https://github.com/symphonycms/symphony-2/issues/2318
+                     */
+                    $value = General::sanitize(General::reverse_sanitize($value));
 
                     $relation_data[] = array(
                         'id' =>             $entry->get('id'),
@@ -722,7 +735,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
             $item->setAttribute('handle', Lang::createHandle($relation['value']));
             $item->setAttribute('section-handle', $relation['section_handle']);
             $item->setAttribute('section-name', General::sanitize($relation['section_name']));
-            $item->setValue(General::sanitize($relation['value']));
+            $item->setValue($relation['value']);
 
             $list->appendChild($item);
         }
@@ -753,14 +766,25 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
         }
 
         $result = $this->findRelatedValues($data['relation_id']);
-        $output = '';
+        $context = $this->getAssociationContext();
+        $output = new XMLElement('div', null, array(
+            'class' => ($this->get('allow_multiple_selection') === 'yes' ? 'multi' : 'single'),
+            'data-interface' => $context['interface'],
+            'data-count' => count($result),
+            'data-label-singular' => __('association'),
+            'data-label-plural' => __('associations')
+        ));
+        $list = new XMLElement('ul');
 
         foreach ($result as $item) {
-            $link = Widget::Anchor(is_null($item['value']) ? '' : $item['value'], sprintf('%s/publish/%s/edit/%d/', SYMPHONY_URL, $item['section_handle'], $item['id']));
-            $output .= $link->generate() . ', ';
+            $link = Widget::Anchor(is_null($item['value']) ? '' : htmlspecialchars_decode($item['value']), sprintf('%s/publish/%s/edit/%d/', SYMPHONY_URL, $item['section_handle'], $item['id']));
+            $item = new XMLElement('li');
+            $item->appendChild($link);
+            $list->appendChild($item);
         }
 
-        return trim($output, ', ');
+        $output->appendChild($list);
+        return $output->generate();
     }
 
     public function preparePlainTextValue($data, $entry_id = null, $truncate = false, $defaultValue = null)
@@ -777,7 +801,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
 
         $label = '';
         foreach ($result as $item) {
-            $label .= $item['value'] . ', ';
+            $label .= strip_tags(htmlspecialchars_decode($item['value'])) . ', ';
         }
 
         return trim($label, ', ');
@@ -907,9 +931,9 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
             $item = (object) $item;
 
             if ($mode === $modes->listValue) {
-                $items[] = $item->value;
+                $items[] = General::reverse_sanitize($item->value);
             } elseif ($mode === $modes->listEntryToValue) {
-                $items[$item->id] = $item->value;
+                $items[$item->id] = General::reverse_sanitize($item->value);
             }
         }
 

@@ -15,21 +15,25 @@
 	 */
 	$dictionary = array(
 
-		'Allow selection of multiple options' => 
+		'Allow selection of multiple options' =>
 		'Erlaube Mehrfachauswahl.',
 
-		'Hide when prepopulated' => 
+		'Hide when prepopulated' =>
 		'Vorausgefüllte Felder verstecken',
 
-		'Values' => 
+		'Values' =>
 		'Werte',
 
-		// Missing
-
-		'Association' => 
+		'Association' =>
 		'Verknüpfungen',
 
-		'Maximum entries' => 
-		false,
+		'association' =>
+		'Verknüpfung',
+
+		'associations' =>
+		'Verknüpfungen',
+
+		'Maximum entries' =>
+		'Maximale Anzahl der Einträge',
 
 	);
