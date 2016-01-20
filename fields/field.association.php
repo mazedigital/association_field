@@ -102,7 +102,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
 
         // find the sections of the related fields
         $sections = Symphony::Database()->fetch(
-            "SELECT DISTINCT (s.id), f.id as `field_id`
+            "SELECT DISTINCT (s.id), f.id as `field_id`, s.sortorder 
              FROM `tbl_sections` AS `s`
              LEFT JOIN `tbl_fields` AS `f` ON `s`.id = `f`.parent_section
              WHERE `f`.id IN ('" . implode("','", $this->get('related_field_id')) . "')
