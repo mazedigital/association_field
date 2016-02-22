@@ -121,8 +121,29 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
                 );
 
                 if ($limit > 0) {
+
+                    $where = '';
+                    $joins = '';
+
+                    /**
+                     * Allow the results to be modified using adjust publish filtering functionality on the core
+                     *
+                     * @delegate AssociationFiltering
+                     * @since Symphony 1.1.0
+                     * @param string $context
+                     * '/publish/'
+                     * @param array $options
+                     *  An array which should contain the section id
+                     *  and the joins and where clauses by reference both passed by reference
+                     */
+                    Symphony::ExtensionManager()->notifyMembers('AssociationFiltering', '/publish/', array(
+                        'section-id' => $section->get('id'),
+                        'joins' => &$joins,
+                        'where' => &$where
+                    ));
+
                     EntryManager::setFetchSorting($section->getSortingField(), $section->getSortingOrder());
-                    $entries = EntryManager::fetch(null, $section->get('id'), $limit, 0, null, null, false, false);
+                    $entries = EntryManager::fetch(null, $section->get('id'), $limit, 0, $where, $joins, false, false);
                     foreach ($entries as $entry) {
                         $results[] = (int) $entry['id'];
                     }
