@@ -91,7 +91,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
         $this->_settings[$field] = $value;
     }
 
-    public function findOptions(array $selected_ids = array(), $entry_id = null)
+    public function findOptions(array $selected_ids = array(), $entry_id = null, &$filters = array())
     {
         $values = array();
         $limit = $this->get('limit');
@@ -135,11 +135,15 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
                      * @param array $options
                      *  An array which should contain the section id
                      *  and the joins and where clauses by reference both passed by reference
+                     *  also contains a field-id of the current field being rendered
+                     *  along with a filters array which can be filled with filters to be passed to the association entry
                      */
                     Symphony::ExtensionManager()->notifyMembers('AssociationFiltering', '/publish/', array(
                         'section-id' => $section->get('id'),
+                        'field-id' => $this->get('id'),
                         'joins' => &$joins,
-                        'where' => &$where
+                        'where' => &$where,
+                        'filters' => &$filters,
                     ));
 
                     EntryManager::setFetchSorting($section->getSortingField(), $section->getSortingOrder());
@@ -640,6 +644,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
     public function displayPublishPanel(XMLElement &$wrapper, $data = null, $flagWithError = null, $fieldnamePrefix = null, $fieldnamePostfix = null, $entry_id = null)
     {
         $entry_ids = array();
+        $filters = array();
         $options = array(
             array(null, false, null)
         );
@@ -653,7 +658,14 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
         }
 
         $options = array_merge($options, $this->findSelected($entry_ids));
-        $states = $this->findOptions($entry_ids, $entry_id);
+        $states = $this->findOptions($entry_ids, $entry_id, $filters);
+
+        //filters are passed via a delegate callback and are set as attributes so they can be used by the association selector
+        if (!empty($filters)){
+            foreach ($filters as $key => $value) {
+                $wrapper->setAttribute("data-filter-{$key}",$value);
+            }
+        }
 
         if (!empty($states)) {
             foreach ($states as $s) {
