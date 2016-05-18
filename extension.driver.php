@@ -24,7 +24,7 @@ Class extension_association_field extends Extension
         $callback = Symphony::Engine()->getPageCallback();
 
         if ($callback['driver'] == 'publish' && $callback['context']['page'] === 'index') {
-            Administration::instance()->Page->addStylesheetToHead(URL . '/extensions/association_field/assets/association_field.publish.css');
+            Administration::instance()->Page->addStylesheetToHead(URL . '/extensions/association_field/assets/association_field.publish.css?' . ExtensionManager::fetchInstalledVersion('association_field'));
         }
     }
 
