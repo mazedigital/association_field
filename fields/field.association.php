@@ -511,6 +511,12 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
     {
         $message = null;
 
+        if (isset($data['relation_id']) && !is_array($data['relation_id'])){
+            var_dump($data);
+            var_dump($this->get('id'));
+            var_dump($entry_id);die;
+        }
+
         $data = is_array($data) && isset($data['relation_id'])
                 ? array_filter($data['relation_id'])
                 : $data;
@@ -911,6 +917,11 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
                 'help' => __('Find values that are an exact match for the given string.')
             ),
             array(
+                'title' => 'related:',
+                'filter' => 'related: ',
+                'help' => __('Find values by filtering on the associated field, can use regexp.')
+            ),
+            array(
                 'filter' => 'sql: NOT NULL',
                 'title' => 'is not empty',
                 'help' => __('Find entries where any value is selected.')
@@ -937,7 +948,41 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
     {
         $field_id = $this->get('id');
 
-        if (preg_match('/^sql:\s*/', $data[0], $matches)) {
+        if (preg_match('/^related:\s*/', $data[0], $matches)) {
+
+            $data[0] = preg_replace('/^related: /', null, $data[0]);
+
+            $related_field_id = current($this->get('related_field_id'));
+            $related_field = FieldManager::fetch($related_field_id);
+
+            $newJoin = '';
+            $newWhere = '';
+
+            $related_field->buildDSRetrievalSQL($data,$newJoin,$newWhere);
+
+            if (empty($newWhere)){
+                // the filter is empty eg an empty regexp so no need to continue
+                return true;
+            }
+        
+            $relatedTableName = "t{$related_field_id}";
+            if ($related_field->_key){
+                $relatedTableName .= '_'.$related_field->_key;
+            }
+
+            // Join the main field
+            $joins .= " LEFT JOIN
+                            `tbl_entries_data_{$field_id}` AS `t{$field_id}`
+                        ON (`e`.`id` = `t{$field_id}`.`entry_id`)";
+
+            // Join the related field
+            $joins .= " LEFT JOIN
+                            `tbl_entries_data_{$related_field_id}` AS `$relatedTableName`
+                        ON (`t{$field_id}`.`relation_id` = `$relatedTableName`.`entry_id`)";
+
+            $where .= $newWhere;
+
+        } else if (preg_match('/^sql:\s*/', $data[0], $matches)) {
             $data = trim(array_pop(explode(':', $data[0], 2)));
 
             if (strpos($data, "NOT NULL") !== false) {
