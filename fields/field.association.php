@@ -511,12 +511,6 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
     {
         $message = null;
 
-        if (isset($data['relation_id']) && !is_array($data['relation_id'])){
-            var_dump($data);
-            var_dump($this->get('id'));
-            var_dump($entry_id);die;
-        }
-
         $data = is_array($data) && isset($data['relation_id'])
                 ? array_filter($data['relation_id'])
                 : $data;
