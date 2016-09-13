@@ -1010,6 +1010,8 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
 
     public function buildDSRetrievalSQL($data, &$joins, &$where, $andOperation = false)
     {
+        // var_dump($data);
+
         $field_id = $this->get('id');
 
         if (preg_match('/^sql:\s*/', $data[0], $matches)) {
@@ -1047,47 +1049,63 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
             foreach ($data as $key => &$value) {
                 // for now, I assume string values are the only possible handles.
                 // of course, this is not entirely true, but I find it good enough.
+
+                if(!is_numeric($value)){
+                    // var_dump($value);
+                    // $strData = implode(',',$value);
+                    $pos = strpos($value, 'not:');
+                    // var_dump($pos);
+                    if($pos !== FALSE){
+                        $not_in = substr($value, ($pos+4));
+                        self::addCondition($where, $joins, $andOperation, TRUE, explode(',',$not_in), $field_id);
+                    }
+                }
                 if (!is_numeric($value) && !is_null($value)) {
                     $value = $this->fetchIDfromValue($value);
                 }
             }
 
-            if ($andOperation) {
-                $condition = ($negation) ? '!=' : '=';
-                foreach ($data as $key => $bit) {
-                    $joins .= " LEFT JOIN `tbl_entries_data_$field_id` AS `t$field_id$key` ON (`e`.`id` = `t$field_id$key`.entry_id) ";
-                    $where .= " AND (`t$field_id$key`.relation_id $condition '$bit' ";
-
-                    if ($null) {
-                        $where .= " OR `t$field_id$key`.`relation_id` IS NULL) ";
-                    } else {
-                        $where .= ") ";
-                    }
-                }
-            } else {
-                $condition = ($negation) ? 'NOT IN' : 'IN';
-
-                // Apply a different where condition if we are using $negation. RE: #29
-                if ($negation) {
-                    $condition = 'NOT EXISTS';
-                    $where .= " AND $condition (
-                        SELECT *
-                        FROM `tbl_entries_data_$field_id` AS `t$field_id`
-                        WHERE `t$field_id`.entry_id = `e`.id AND `t$field_id`.relation_id IN (".implode(", ", $data).")
-                    )";
-                } else {
-
-                    // Normal filtering
-                    $joins .= " LEFT JOIN `tbl_entries_data_$field_id` AS `t$field_id` ON (`e`.`id` = `t$field_id`.entry_id) ";
-                    $where .= " AND (`t$field_id`.relation_id $condition ('".implode("', '", $data)."') ";
-
-                    // If we want entries with null values included in the result
-                    $where .= ($null) ? " OR `t$field_id`.`relation_id` IS NULL) " : ") ";
-                }
-            }
+            self::addCondition($where, $joins, $andOperation, $negation, $data, $field_id);
         }
 
         return true;
+    }
+
+    private function addCondition(&$where, &$joins, $andOperation, $negation, $data, $field_id)
+    {
+         if ($andOperation) {
+            $condition = ($negation) ? '!=' : '=';
+            foreach ($data as $key => $bit) {
+                $joins .= " LEFT JOIN `tbl_entries_data_$field_id` AS `t$field_id$key` ON (`e`.`id` = `t$field_id$key`.entry_id) ";
+                $where .= " AND (`t$field_id$key`.relation_id $condition '$bit' ";
+
+                if ($null) {
+                    $where .= " OR `t$field_id$key`.`relation_id` IS NULL) ";
+                } else {
+                    $where .= ") ";
+                }
+            }
+        } else {
+            $condition = ($negation) ? 'NOT IN' : 'IN';
+
+            // Apply a different where condition if we are using $negation. RE: #29
+            if ($negation) {
+                $condition = 'NOT EXISTS';
+                $where .= " AND $condition (
+                    SELECT *
+                    FROM `tbl_entries_data_$field_id` AS `t$field_id`
+                    WHERE `t$field_id`.entry_id = `e`.id AND `t$field_id`.relation_id IN (".implode(", ", $data).")
+                )";
+            } else {
+
+                // Normal filtering
+                $joins .= " LEFT JOIN `tbl_entries_data_$field_id` AS `t$field_id` ON (`e`.`id` = `t$field_id`.entry_id) ";
+                $where .= " AND (`t$field_id`.relation_id $condition ('".implode("', '", $data)."') ";
+
+                // If we want entries with null values included in the result
+                $where .= ($null) ? " OR `t$field_id`.`relation_id` IS NULL) " : ") ";
+            }
+        }
     }
 
 /*-------------------------------------------------------------------------
