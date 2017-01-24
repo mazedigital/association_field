@@ -1010,7 +1010,8 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
 
     public function buildDSRetrievalSQL($data, &$joins, &$where, $andOperation = false)
     {
-        // var_dump($data);
+        //Clean string for SQL
+        MySQL::cleanFields($data);
 
         $field_id = $this->get('id');
 
