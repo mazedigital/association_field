@@ -419,6 +419,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
 
         foreach ($related_field_ids as $related_field_id) {
             try {
+
                 $return = Symphony::Database()->fetchCol("id", sprintf(
                     "SELECT `entry_id` as `id`
                      FROM `tbl_entries_data_%d`
@@ -1010,12 +1011,11 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
 
     public function buildDSRetrievalSQL($data, &$joins, &$where, $andOperation = false)
     {
-        //Clean string for SQL
-        MySQL::cleanFields($data);
 
         $field_id = $this->get('id');
 
         if (preg_match('/^sql:\s*/', $data[0], $matches)) {
+
             $data = trim(array_pop(explode(':', $data[0], 2)));
 
             if (strpos($data, "NOT NULL") !== false) {
@@ -1036,6 +1036,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
 
             }
         } else {
+
             $negation = false;
             $null = false;
             if (preg_match('/^not:/', $data[0])) {
@@ -1045,7 +1046,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
                 $data[0] = preg_replace('/^sql-null-or-not:/', null, $data[0]);
                 $negation = true;
                 $null = true;
-            }
+            }            
 
             foreach ($data as $key => &$value) {
                 // for now, I assume string values are the only possible handles.
@@ -1073,7 +1074,10 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
     }
 
     private function addCondition(&$where, &$joins, $andOperation, $negation, $data, $field_id)
-    {
+    {   
+        //Clean string for SQL
+        MySQL::cleanFields($data);
+
          if ($andOperation) {
             $condition = ($negation) ? '!=' : '=';
             foreach ($data as $key => $bit) {
