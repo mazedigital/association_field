@@ -1075,9 +1075,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
 
     private function addCondition(&$where, &$joins, $andOperation, $negation, $data, $field_id)
     {   
-        //Clean string for SQL
-        MySQL::cleanFields($data);
-
+        
          if ($andOperation) {
             $condition = ($negation) ? '!=' : '=';
             foreach ($data as $key => $bit) {
