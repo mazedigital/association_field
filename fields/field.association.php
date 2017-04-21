@@ -926,6 +926,11 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
                 'help' => __('Find entries where no value is selected.')
             ),
             array(
+                'filter' => 'sql-null-or: ',
+                'title' => 'is empty or',
+                'help' => __('Find entries where no value is selected or it is equal to this value.')
+            ),
+            array(
                 'filter' => 'sql-null-or-not: ',
                 'title' => 'is empty or not',
                 'help' => __('Find entries where no value is selected or it is not equal to this value.')
@@ -1002,7 +1007,10 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
             if (preg_match('/^not:/', $data[0])) {
                 $data[0] = preg_replace('/^not:/', null, $data[0]);
                 $negation = true;
-            } elseif (preg_match('/^sql-null-or-not:/', $data[0])) {
+            } elseif (preg_match('/^sql-null-or:/', $data[0])) {
+                $data[0] = preg_replace('/^sql-null-or:/', null, $data[0]);
+                $null = true;
+            }elseif (preg_match('/^sql-null-or-not:/', $data[0])) {
                 $data[0] = preg_replace('/^sql-null-or-not:/', null, $data[0]);
                 $negation = true;
                 $null = true;
