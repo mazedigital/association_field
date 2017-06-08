@@ -1001,6 +1001,11 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
                 'help' => __('Find entries where no value is selected or it is not equal to this value.')
             ),
             array(
+                'filter' => 'sql-null-or: ',
+                'title' => 'is empty or',
+                'help' => __('Find entries where no value is selected or it is equal to this value.')
+            ),
+            array(
                 'filter' => 'not: ',
                 'title' => 'is not',
                 'help' => __('Find entries where the value is not equal to this value.')
@@ -1040,6 +1045,10 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
             if (preg_match('/^not:/', $data[0])) {
                 $data[0] = preg_replace('/^not:/', null, $data[0]);
                 $negation = true;
+            } elseif (preg_match('/^sql-null-or:/', $data[0])) {
+                $data[0] = preg_replace('/^sql-null-or:/', null, $data[0]);
+                $negation = false;
+                $null = true;
             } elseif (preg_match('/^sql-null-or-not:/', $data[0])) {
                 $data[0] = preg_replace('/^sql-null-or-not:/', null, $data[0]);
                 $negation = true;
@@ -1057,7 +1066,7 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
                     // var_dump($pos);
                     if($pos !== FALSE){
                         $not_in = substr($value, ($pos+4));
-                        self::addCondition($where, $joins, $andOperation, TRUE, explode(',',$not_in), $field_id);
+                        self::addCondition($where, $joins, $andOperation, TRUE, FALSE, explode(',',$not_in), $field_id);
                     }
                 }
                 if (!is_numeric($value) && !is_null($value)) {
@@ -1065,14 +1074,15 @@ class FieldAssociation extends Field implements ExportableField, ImportableField
                 }
             }
 
-            self::addCondition($where, $joins, $andOperation, $negation, $data, $field_id);
+            self::addCondition($where, $joins, $andOperation, $negation, $null, $data, $field_id);
         }
 
         return true;
     }
 
-    private function addCondition(&$where, &$joins, $andOperation, $negation, $data, $field_id)
+    private function addCondition(&$where, &$joins, $andOperation, $negation, $null, $data, $field_id)
     {
+
          if ($andOperation) {
             $condition = ($negation) ? '!=' : '=';
             foreach ($data as $key => $bit) {
